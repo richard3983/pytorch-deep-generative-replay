@@ -64,14 +64,14 @@ class Solver(BatchTrainable):
         real_scores = self.forward(x)
         real_loss = self.criterion(real_scores, y)
         _, real_predicted = real_scores.max(1)
-        real_prec = (y == real_predicted).sum().data[0] / batch_size
+        real_prec = (y == real_predicted).sum().item() / batch_size
 
         # run the model on the replayed data.
         if x_ is not None and y_ is not None:
             replay_scores = self.forward(x_)
             replay_loss = self.criterion(replay_scores, y_)
             _, replay_predicted = replay_scores.max(1)
-            replay_prec = (y_ == replay_predicted).sum().data[0] / batch_size
+            replay_prec = (y_ == replay_predicted).sum().item() / batch_size
 
             # calculate joint loss of real data and replayed data.
             loss = (
@@ -85,7 +85,7 @@ class Solver(BatchTrainable):
 
         loss.backward()
         self.optimizer.step()
-        return {'loss': loss.data[0], 'precision': precision}
+        return {'loss': loss.item(), 'precision': precision}
 
     def set_optimizer(self, optimizer):
         self.optimizer = optimizer

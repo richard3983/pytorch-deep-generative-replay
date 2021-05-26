@@ -79,7 +79,7 @@ def validate(model, dataset, test_size=1024,
         _, predicted = torch.max(scores, 1)
 
         # update statistics.
-        total_correct += (predicted == labels).sum().data[0]
+        total_correct += (predicted == labels).sum().item()
         total_tested += len(data)
 
     precision = total_correct / total_tested

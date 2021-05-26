@@ -196,7 +196,7 @@ class Scholar(GenerativeMixin, nn.Module):
                 y_ = Variable(y_).cuda() if cuda else Variable(y_)
 
             # train the model with a batch.
-            if batch_index > 0.5*iterations and xAI:
+            if batch_index > 0.3*iterations and xAI:
                 xAI_switch=True
             else:
                 xAI_switch=False

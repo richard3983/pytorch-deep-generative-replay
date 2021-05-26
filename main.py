@@ -54,12 +54,13 @@ parser.add_argument('--loss-log-interval', type=int, default=30)
 parser.add_argument('--checkpoint-dir', type=str, default='./checkpoints')
 parser.add_argument('--sample-dir', type=str, default='./samples')
 parser.add_argument('--no-gpus', action='store_false', dest='cuda')
+parser.add_argument('--XAI', type=bool, default=False)
 
 main_command = parser.add_mutually_exclusive_group(required=True)
 main_command.add_argument('--train', action='store_true')
 main_command.add_argument('--test', action='store_false', dest='train')
 
-main_command.add_argument('--XAI', type=bool, default=False)
+
 
 if __name__ == '__main__':
     args = parser.parse_args()

@@ -32,11 +32,11 @@ def train(scholar, train_datasets, test_datasets, replay_mode,
         scholar.solver.parameters(),
         lr=lr, weight_decay=weight_decay, betas=(beta1, beta2),
     )
-    generator_g_optimizer = optim.Adam(
+    generator_g_optimizer = optim.RMSprop(
         scholar.generator.generator.parameters(),
         lr=lr, weight_decay=weight_decay, betas=(beta1, beta2),
     )
-    generator_c_optimizer = optim.Adam(
+    generator_c_optimizer = optim.RMSprop(
         scholar.generator.critic.parameters(),
         lr=lr, weight_decay=weight_decay, betas=(beta1, beta2),
     )

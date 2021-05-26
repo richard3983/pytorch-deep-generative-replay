@@ -69,7 +69,7 @@ class Generator(nn.Module):
             channel_size, image_channel_size,
             kernel_size=3, stride=1, padding=1
         )
-        self.out = F.sigmoid()
+        self.out = nn.Sigmoid()
 
     def forward(self, z):
         g = F.relu(self.bn0(self.fc(z).view(

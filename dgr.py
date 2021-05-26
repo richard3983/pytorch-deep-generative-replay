@@ -109,7 +109,7 @@ class Scholar(GenerativeMixin, nn.Module):
             solver_iterations=1000,
             solver_training_callbacks=None,
             collate_fn=None,
-            xAI):
+            xAI=False):
         # scholar and previous datasets cannot be given at the same time.
         mutex_condition_infringed = all([
             scholar is not None,

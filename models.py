@@ -6,6 +6,7 @@ import gan
 import dgr
 import utils
 from const import EPSILON
+from explanation_utils import explanation_hook, get_explanation
 
 
 class WGAN(dgr.Generator):
@@ -39,7 +40,7 @@ class WGAN(dgr.Generator):
         self.critic_updates_per_generator_update = None
         self.lamda = None
 
-    def train_a_batch(self, x, y, x_=None, y_=None, importance_of_new_task=.5):
+    def train_a_batch(self, x, y, xAI, x_=None, y_=None, importance_of_new_task=.5):
         assert x_ is None or x.size() == x_.size()
         assert y_ is None or y.size() == y_.size()
 
@@ -76,9 +77,11 @@ class WGAN(dgr.Generator):
             self.critic_optimizer.step()
 
         # run the generator and backpropagate the errors.
+        if xAI:
+            self.generator.out.register_backward_hook(explanation_hook)
         self.generator_optimizer.zero_grad()
         z = self._noise(x.size(0))
-        g_loss = self._g_loss(z)
+        g_loss = self._g_loss(z, xAI=xAI)
         g_loss.backward()
         self.generator_optimizer.step()
 
@@ -110,9 +113,14 @@ class WGAN(dgr.Generator):
         l = -(c_x-c_g)
         return (l, g) if return_g else l
 
-    def _g_loss(self, z, return_g=False):
+    def _g_loss(self, z, xAI=False, return_g=False):
         g = self.generator(z)
-        l = -self.critic(g).mean()
+        pred = self.critic(g)
+        if xAI:
+            get_explanation(generated_data=g, discriminator=self.critic, prediction=pred,
+                                XAItype="saliency", cuda=self.cuda, trained_data=None,
+                                data_type="mnist")
+        l = -pred.mean()
         return (l, g) if return_g else l
 
     def _gradient_penalty(self, x, g, lamda):

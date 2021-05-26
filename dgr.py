@@ -6,7 +6,6 @@ from torch import nn
 from torch.autograd import Variable
 from torch.utils.data import ConcatDataset
 
-
 # ============
 # Base Classes
 # ============
@@ -24,7 +23,7 @@ class BatchTrainable(nn.Module, metaclass=abc.ABCMeta):
 
     """
     @abc.abstractmethod
-    def train_a_batch(self, x, y, x_=None, y_=None, importance_of_new_task=.5):
+    def train_a_batch(self, x, y, xAI, x_=None, y_=None, importance_of_new_task=.5):
         raise NotImplementedError
 
 
@@ -52,7 +51,7 @@ class Solver(BatchTrainable):
         _, predictions = torch.max(scores, 1)
         return predictions
 
-    def train_a_batch(self, x, y, x_=None, y_=None, importance_of_new_task=.5):
+    def train_a_batch(self, x, y, xAI, x_=None, y_=None, importance_of_new_task=.5):
         assert x_ is None or x.size() == x_.size()
         assert y_ is None or y.size() == y_.size()
 
@@ -109,7 +108,8 @@ class Scholar(GenerativeMixin, nn.Module):
             generator_training_callbacks=None,
             solver_iterations=1000,
             solver_training_callbacks=None,
-            collate_fn=None):
+            collate_fn=None,
+            xAI):
         # scholar and previous datasets cannot be given at the same time.
         mutex_condition_infringed = all([
             scholar is not None,
@@ -128,6 +128,7 @@ class Scholar(GenerativeMixin, nn.Module):
             iterations=generator_iterations,
             training_callbacks=generator_training_callbacks,
             collate_fn=collate_fn,
+            xAI=xAI
         )
 
         # train the solver of the scholar.
@@ -153,7 +154,7 @@ class Scholar(GenerativeMixin, nn.Module):
     def _train_batch_trainable_with_replay(
             self, trainable, dataset, scholar=None, previous_datasets=None,
             importance_of_new_task=.5, batch_size=32, iterations=1000,
-            training_callbacks=None, collate_fn=None):
+            training_callbacks=None, collate_fn=None, xAI=False):
         # do not train the model when given non-positive iterations.
         if iterations <= 0:
             return
@@ -196,8 +197,8 @@ class Scholar(GenerativeMixin, nn.Module):
 
             # train the model with a batch.
             result = trainable.train_a_batch(
-                x, y, x_=x_, y_=y_,
-                importance_of_new_task=importance_of_new_task
+                x, y, xAI, x_=x_, y_=y_,
+                importance_of_new_task=importance_of_new_task, 
             )
 
             # fire the callbacks on each iteration.

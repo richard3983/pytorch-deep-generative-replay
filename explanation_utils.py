@@ -57,8 +57,8 @@ def get_explanation(generated_data, discriminator, prediction, XAItype="shap", c
 
     if len(indices) > 1:
         if XAItype == "saliency":
+            explainer = Saliency(discriminator)
             for i in range(len(indices)):
-                explainer = Saliency(discriminator)
                 temp[indices[i], :] = explainer.attribute(data[i, :].detach().unsqueeze(0))
 
         elif XAItype == "shap":

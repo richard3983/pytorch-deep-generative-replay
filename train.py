@@ -25,7 +25,8 @@ def train(scholar, train_datasets, test_datasets, replay_mode,
           sample_dir='./samples',
           checkpoint_dir='./checkpoints',
           collate_fn=None,
-          cuda=False):
+          cuda=False,
+          xAI=False):
     # define solver criterion and generators for the scholar model.
     solver_criterion = nn.CrossEntropyLoss()
     solver_optimizer = optim.Adam(
@@ -100,6 +101,7 @@ def train(scholar, train_datasets, test_datasets, replay_mode,
             solver_iterations=solver_iterations,
             solver_training_callbacks=solver_training_callbacks,
             collate_fn=collate_fn,
+            xAI=xAI
         )
 
         previous_scholar = (

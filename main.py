@@ -59,6 +59,7 @@ main_command = parser.add_mutually_exclusive_group(required=True)
 main_command.add_argument('--train', action='store_true')
 main_command.add_argument('--test', action='store_false', dest='train')
 
+main_command.add_argument('--XAI', type=bool, default=False)
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -183,7 +184,8 @@ if __name__ == '__main__':
             sample_dir=args.sample_dir,
             checkpoint_dir=args.checkpoint_dir,
             collate_fn=utils.label_squeezing_collate_fn,
-            cuda=cuda
+            cuda=cuda,
+            xAI=args.XAI
         )
     else:
         path = os.path.join(args.sample_dir, '{}-sample'.format(scholar.name))

@@ -26,7 +26,6 @@ class WGAN(dgr.Generator):
             image_size=self.image_size,
             image_channel_size=self.image_channel_size,
             channel_size=self.c_channel_size,
-            xAI=
         )
         
         

@@ -28,7 +28,8 @@ class Critic(nn.Module):
             kernel_size=4, stride=1, padding=1,
         )
         self.fc = nn.Linear((image_size//8)**2 * channel_size*4*9//8, 1)
-
+        self.out = nn.Sigmoid()
+        
     def forward(self, x):
         x = F.leaky_relu(self.conv1(x))
         x = F.leaky_relu(self.conv2(x))
@@ -36,7 +37,7 @@ class Critic(nn.Module):
         x = F.leaky_relu(self.conv4(x))
         x = x.view(-1, (self.image_size//8)**2 * self.channel_size*4*9//8)
         x = self.fc(x)
-        return nn.Sigmoid(x)
+        return self.out(x)
 
 
 class Generator(nn.Module):

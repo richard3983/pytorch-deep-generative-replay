@@ -35,7 +35,8 @@ class Critic(nn.Module):
         x = F.leaky_relu(self.conv3(x))
         x = F.leaky_relu(self.conv4(x))
         x = x.view(-1, (self.image_size//8)**2 * self.channel_size*4*9//8)
-        return self.fc(x)
+        x = self.fc(x)
+        return nn.Sigmoid(x)
 
 
 class Generator(nn.Module):

@@ -103,7 +103,6 @@ def explanation_hook(module, grad_input, grad_output):
     # temp = images_to_vectors(get_values())
     temp = get_values()
     # multiply with mask to generate values in range [1x, 1.2x] where x is the original calculated gradient
-    # can be tuned!!!!!!!!!!!!!******************
     new_grad = grad_input[0] + 0.2 * (grad_input[0] * temp)
 
     return (new_grad, )

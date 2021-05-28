@@ -12,7 +12,7 @@ from explanation_utils import explanation_hook, get_explanation
 class WGAN(dgr.Generator):
     def __init__(self, z_size,
                  image_size, image_channel_size,
-                 c_channel_size, g_channel_size):
+                 c_channel_size, g_channel_size, xAI):
         # configurations
         super().__init__()
         self.z_size = z_size
@@ -26,7 +26,10 @@ class WGAN(dgr.Generator):
             image_size=self.image_size,
             image_channel_size=self.image_channel_size,
             channel_size=self.c_channel_size,
+            xAI=
         )
+        
+        
         self.generator = gan.Generator(
             z_size=self.z_size,
             image_size=self.image_size,
@@ -51,29 +54,30 @@ class WGAN(dgr.Generator):
 
             # run the critic on the real data.
             c_loss_real, g_real = self._c_loss(x, z, return_g=True)
-            c_loss_real_gp = (
-                c_loss_real + self._gradient_penalty(x, g_real, self.lamda)
-            )
+            # c_loss_real_gp = (
+            #     c_loss_real + self._gradient_penalty(x, g_real, self.lamda)
+            # )
 
             # run the critic on the replayed data.
             if x_ is not None and y_ is not None:
                 c_loss_replay, g_replay = self._c_loss(x_, z, return_g=True)
-                c_loss_replay_gp = (c_loss_replay + self._gradient_penalty(
-                    x_, g_replay, self.lamda
-                ))
+                # c_loss_replay_gp = (c_loss_replay + self._gradient_penalty(
+                #     x_, g_replay, self.lamda
+                # ))
                 c_loss = (
                     importance_of_new_task * c_loss_real +
                     (1-importance_of_new_task) * c_loss_replay
                 )
-                c_loss_gp = (
-                    importance_of_new_task * c_loss_real_gp +
-                    (1-importance_of_new_task) * c_loss_replay_gp
-                )
+                # c_loss_gp = (
+                #     importance_of_new_task * c_loss_real_gp +
+                #     (1-importance_of_new_task) * c_loss_replay_gp
+                # )
             else:
                 c_loss = c_loss_real
-                c_loss_gp = c_loss_real_gp
+                # c_loss_gp = c_loss_real_gp
 
-            c_loss_gp.backward()
+            # c_loss_gp.backward()
+            c_loss.backward()
             self.critic_optimizer.step()
 
         # run the generator and backpropagate the errors.
@@ -83,6 +87,7 @@ class WGAN(dgr.Generator):
         z = self._noise(x.size(0))
         g_loss = self._g_loss(z, xAI=xAI)
         g_loss.backward()
+        nn.utils.clip_grad_norm_(self.generator.parameters(), 10)
         self.generator_optimizer.step()
 
         return {'c_loss': c_loss.item(), 'g_loss': g_loss.item()}
@@ -107,20 +112,30 @@ class WGAN(dgr.Generator):
         return z.cuda() if self._is_on_cuda() else z
 
     def _c_loss(self, x, z, return_g=False):
-        g = self.generator(z)
-        c_x = self.critic(x).mean()
-        c_g = self.critic(g).mean()
-        l = -(c_x-c_g)
+        loss = nn.BCELoss()
+        N = x.size(0)
+        pred_real = self.critic(x)
+        label_real = values_target(size=(N,), value=1, cuda=self.cuda)
+        loss_real = loss(pred_real, label_real)
+        
+        g = self.generator(z).detach()
+        pred_fake=self.critic(g)
+        label_fake = values_target(size=(N,), value=0, cuda=self.cuda)
+        loss_fake = loss(pred_fake, label_fake)
+        l = loss_real + loss_fake
         return (l, g) if return_g else l
 
     def _g_loss(self, z, xAI=False, return_g=False):
+        loss = nn.BCELoss()
+        N = x.size(0)
         g = self.generator(z)
+        label_real = values_target(size=(N,), value=1, cuda=self.cuda)
         pred = self.critic(g)
         if xAI:
             get_explanation(generated_data=g, discriminator=self.critic, prediction=pred,
                                 XAItype="saliency", cuda=self.cuda, trained_data=None,
                                 data_type="mnist")
-        l = -pred.mean()
+        l = loss(pred, label_real)
         return (l, g) if return_g else l
 
     def _gradient_penalty(self, x, g, lamda):

@@ -68,8 +68,8 @@ def noise_cifar(size: int, cuda: False) -> Variable:
 def values_target(size: tuple, value: float, cuda: False) -> Variable:
     """ returns tensor filled with value of given size """
     result = Variable(full(size=size, fill_value=value))
-    # if cuda:
-    #     result = result.cuda()
+    if cuda:
+        result = result.cuda()
     return result
 
 

@@ -7,7 +7,7 @@ import dgr
 import utils
 from const import EPSILON
 from explanation_utils import explanation_hook, get_explanation
-
+from vector_utils import values_target
 
 class WGAN(dgr.Generator):
     def __init__(self, z_size,

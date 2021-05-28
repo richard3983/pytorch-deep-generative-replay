@@ -12,7 +12,7 @@ from explanation_utils import explanation_hook, get_explanation
 class WGAN(dgr.Generator):
     def __init__(self, z_size,
                  image_size, image_channel_size,
-                 c_channel_size, g_channel_size, xAI):
+                 c_channel_size, g_channel_size):
         # configurations
         super().__init__()
         self.z_size = z_size

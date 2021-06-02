@@ -177,7 +177,6 @@ class Scholar(GenerativeMixin, nn.Module):
             from_scholar = scholar is not None
             from_previous_datasets = bool(previous_datasets)
             cuda = self._is_on_cuda()
-
             # sample the real training data.
             x, y = next(data_loader)
             x = Variable(x).cuda() if cuda else Variable(x)
@@ -196,10 +195,11 @@ class Scholar(GenerativeMixin, nn.Module):
                 y_ = Variable(y_).cuda() if cuda else Variable(y_)
 
             # train the model with a batch.
-            if batch_index > 0.3*iterations and xAI:
+            if batch_index > 0*iterations and xAI:
                 xAI_switch=True
             else:
                 xAI_switch=False
+            
             result = trainable.train_a_batch(
                 x, y, xAI=xAI_switch, x_=x_, y_=y_,
                 importance_of_new_task=importance_of_new_task, 

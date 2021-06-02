@@ -15,7 +15,7 @@ import numpy as np
 from torch import Tensor, from_numpy, randn, full
 import torch.nn as nn
 from torch.autograd.variable import Variable
-
+import torch
 
 def images_to_vectors(images: Tensor) -> Tensor:
     """ converts (Nx28x28) tensor to (Nx784) torch tensor """
@@ -67,7 +67,7 @@ def noise_cifar(size: int, cuda: False) -> Variable:
 
 def values_target(size: tuple, value: float, cuda: False) -> Variable:
     """ returns tensor filled with value of given size """
-    result = Variable(full(size=size, fill_value=value))
+    result = Variable(full(size=size, fill_value=value, dtype=torch.float))
     if cuda:
         result = result.cuda()
     return result

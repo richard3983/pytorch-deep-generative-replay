@@ -4,7 +4,7 @@ from torch import optim
 from torch import nn
 import utils
 import visual
-
+from vector_utils import weights_init
 
 def train(scholar, train_datasets, test_datasets, replay_mode,
           generator_lambda=10.,
@@ -52,6 +52,8 @@ def train(scholar, train_datasets, test_datasets, replay_mode,
     scholar.generator.set_critic_updates_per_generator_update(
         generator_c_updates_per_g_update
     )
+    scholar.generator.generator.apply(weights_init)
+    scholar.generator.critic.apply(weights_init)
     scholar.train()
 
     # define the previous scholar who will generate samples of previous tasks.

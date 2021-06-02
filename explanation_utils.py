@@ -45,7 +45,6 @@ def get_explanation(generated_data, discriminator, prediction, XAItype="shap", c
     :return:
     :rtype:
     """
-
     # initialize temp values to all 1s
     temp = values_target(size=generated_data.size(), value=1.0, cuda=cuda)
 
@@ -54,13 +53,13 @@ def get_explanation(generated_data, discriminator, prediction, XAItype="shap", c
     indices = (mask.nonzero(as_tuple=False)).detach().cpu().numpy().flatten().tolist()
 
     data = generated_data[mask, :]
-
+    
     if len(indices) > 1:
         if XAItype == "saliency":
             explainer = Saliency(discriminator)
             for i in range(len(indices)):
                 temp[indices[i], :] = explainer.attribute(data[i, :].detach().unsqueeze(0))
-
+            
         elif XAItype == "shap":
             for i in range(len(indices)):
                 explainer = DeepLiftShap(discriminator)
@@ -104,7 +103,7 @@ def explanation_hook(module, grad_input, grad_output):
     temp = get_values()
     # multiply with mask to generate values in range [1x, 1.2x] where x is the original calculated gradient
     new_grad = grad_input[0] + 0.2 * (grad_input[0] * temp)
-
+    
     return (new_grad, )
 
 

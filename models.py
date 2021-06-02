@@ -35,7 +35,7 @@ class WGAN(dgr.Generator):
             image_channel_size=self.image_channel_size,
             channel_size=self.g_channel_size,
         )
-
+        #self.generator.out.register_backward_hook(explanation_hook)
         # training related components that should be set before training.
         self.generator_optimizer = None
         self.critic_optimizer = None
@@ -45,8 +45,10 @@ class WGAN(dgr.Generator):
     def train_a_batch(self, x, y, xAI, x_=None, y_=None, importance_of_new_task=.5):
         assert x_ is None or x.size() == x_.size()
         assert y_ is None or y.size() == y_.size()
-
+        #if xAI:
+        #    self.generator.out.register_backward_hook(explanation_hook)
         # run the critic and backpropagate the errors.
+        
         for _ in range(self.critic_updates_per_generator_update):
             self.critic_optimizer.zero_grad()
             z = self._noise(x.size(0))
@@ -80,15 +82,18 @@ class WGAN(dgr.Generator):
             self.critic_optimizer.step()
 
         # run the generator and backpropagate the errors.
+    
         if xAI:
-            self.generator.out.register_backward_hook(explanation_hook)
+            handle = self.generator.out.register_backward_hook(explanation_hook)
         self.generator_optimizer.zero_grad()
         z = self._noise(x.size(0))
         g_loss = self._g_loss(z, xAI=xAI)
+        #self.generator_optimizer.zero_grad()
         g_loss.backward()
+        
         nn.utils.clip_grad_norm_(self.generator.parameters(), 10)
         self.generator_optimizer.step()
-
+        handle.remove()
         return {'c_loss': c_loss.item(), 'g_loss': g_loss.item()}
 
     def sample(self, size):
@@ -113,12 +118,12 @@ class WGAN(dgr.Generator):
     def _c_loss(self, x, z, return_g=False):
         loss = nn.BCELoss()
         N = x.size(0)
-        pred_real = self.critic(x)
+        pred_real = self.critic(x).view(-1)
         label_real = values_target(size=(N,), value=1, cuda=self.cuda)
         loss_real = loss(pred_real, label_real)
         
         g = self.generator(z).detach()
-        pred_fake=self.critic(g)
+        pred_fake=self.critic(g).view(-1)
         label_fake = values_target(size=(N,), value=0, cuda=self.cuda)
         loss_fake = loss(pred_fake, label_fake)
         l = loss_real + loss_fake
@@ -126,15 +131,19 @@ class WGAN(dgr.Generator):
 
     def _g_loss(self, z, xAI=False, return_g=False):
         loss = nn.BCELoss()
-        N = x.size(0)
+        N = z.size(0)
         g = self.generator(z)
         label_real = values_target(size=(N,), value=1, cuda=self.cuda)
         pred = self.critic(g)
+        
         if xAI:
             get_explanation(generated_data=g, discriminator=self.critic, prediction=pred,
                                 XAItype="saliency", cuda=self.cuda, trained_data=None,
                                 data_type="mnist")
+    
+
         l = loss(pred, label_real)
+    
         return (l, g) if return_g else l
 
     def _gradient_penalty(self, x, g, lamda):

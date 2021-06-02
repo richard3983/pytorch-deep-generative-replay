@@ -11,33 +11,56 @@ class Critic(nn.Module):
         self.channel_size = channel_size
 
         # layers
-        self.conv1 = nn.Conv2d(
-            image_channel_size, channel_size,
-            kernel_size=4, stride=2, padding=1
+        # self.conv1 = nn.Conv2d(
+        #     image_channel_size, channel_size,
+        #     kernel_size=4, stride=2, padding=1
+        # )
+        # self.conv2 = nn.Conv2d(
+        #     channel_size, channel_size*2,
+        #     kernel_size=4, stride=2, padding=1
+        # )
+        # self.conv3 = nn.Conv2d(
+        #     channel_size*2, channel_size*4,
+        #     kernel_size=4, stride=2, padding=1
+        # )
+        # self.conv4 = nn.Conv2d(
+        #     channel_size*4, channel_size*8,
+        #     kernel_size=4, stride=1, padding=1,
+        # )
+        # self.fc = nn.Linear((image_size//8)**2 * channel_size*4*9//8, 1)
+        # self.out = nn.Sigmoid()
+        
+        # self.n_features = (3, 32, 32)
+        # nc, ndf = 3, 64
+
+        self.input_layer = nn.Sequential(
+            nn.Conv2d(image_channel_size, channel_size, 4, 2, 1, bias=False),
+            nn.LeakyReLU(0.2, inplace=True),
         )
-        self.conv2 = nn.Conv2d(
-            channel_size, channel_size*2,
-            kernel_size=4, stride=2, padding=1
+
+        self.hidden1 = nn.Sequential(
+            nn.Conv2d(channel_size, channel_size * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(channel_size * 2),
+            nn.LeakyReLU(0.2, inplace=True),
         )
-        self.conv3 = nn.Conv2d(
-            channel_size*2, channel_size*4,
-            kernel_size=4, stride=2, padding=1
+
+        self.hidden2 = nn.Sequential(
+            nn.Conv2d(channel_size * 2, channel_size * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(channel_size * 4),
+            nn.LeakyReLU(0.2, inplace=True),
         )
-        self.conv4 = nn.Conv2d(
-            channel_size*4, channel_size*8,
-            kernel_size=4, stride=1, padding=1,
+
+        self.out = nn.Sequential(
+            nn.Conv2d(channel_size * 4, 1, 4, 1, 0, bias=False),
+            nn.Sigmoid()
         )
-        self.fc = nn.Linear((image_size//8)**2 * channel_size*4*9//8, 1)
-        self.out = nn.Sigmoid()
         
     def forward(self, x):
-        x = F.leaky_relu(self.conv1(x))
-        x = F.leaky_relu(self.conv2(x))
-        x = F.leaky_relu(self.conv3(x))
-        x = F.leaky_relu(self.conv4(x))
-        x = x.view(-1, (self.image_size//8)**2 * self.channel_size*4*9//8)
-        x = self.fc(x)
-        return self.out(x)
+        x = self.input_layer(x)
+        x = self.hidden1(x)
+        x = self.hidden2(x)
+        x = self.out(x)
+        return x
 
 
 class Generator(nn.Module):
@@ -50,38 +73,60 @@ class Generator(nn.Module):
         self.channel_size = channel_size
 
         # layers
-        self.fc = nn.Linear(z_size, (image_size//8)**2 * channel_size*8)
-        self.bn0 = nn.BatchNorm2d(channel_size*8)
-        self.bn1 = nn.BatchNorm2d(channel_size*4)
-        self.deconv1 = nn.ConvTranspose2d(
-            channel_size*8, channel_size*4,
-            kernel_size=4, stride=2, padding=1
-        )
-        self.bn2 = nn.BatchNorm2d(channel_size*2)
-        self.deconv2 = nn.ConvTranspose2d(
-            channel_size*4, channel_size*2,
-            kernel_size=4, stride=2, padding=1,
-        )
-        self.bn3 = nn.BatchNorm2d(channel_size)
-        self.deconv3 = nn.ConvTranspose2d(
-            channel_size*2, channel_size,
-            kernel_size=4, stride=2, padding=1
-        )
-        self.deconv4 = nn.ConvTranspose2d(
-            channel_size, image_channel_size,
-            kernel_size=3, stride=1, padding=1
-        )
-        self.out = nn.Sigmoid()
+        # self.fc = nn.Linear(z_size, (image_size//8)**2 * channel_size*8)
+        # self.bn0 = nn.BatchNorm2d(channel_size*8)
+        # self.bn1 = nn.BatchNorm2d(channel_size*4)
+        # self.deconv1 = nn.ConvTranspose2d(
+        #     channel_size*8, channel_size*4,
+        #     kernel_size=4, stride=2, padding=1
+        # )
+        # self.bn2 = nn.BatchNorm2d(channel_size*2)
+        # self.deconv2 = nn.ConvTranspose2d(
+        #     channel_size*4, channel_size*2,
+        #     kernel_size=4, stride=2, padding=1,
+        # )
+        # self.bn3 = nn.BatchNorm2d(channel_size)
+        # self.deconv3 = nn.ConvTranspose2d(
+        #     channel_size*2, channel_size,
+        #     kernel_size=4, stride=2, padding=1
+        # )
+        # self.deconv4 = nn.ConvTranspose2d(
+        #     channel_size, image_channel_size,
+        #     kernel_size=3, stride=1, padding=1
+        # )
+        # self.out = nn.Sigmoid()
+        
+        # self.n_features = 100
+        # self.n_out = (3, 32, 32)
+        # nc, nz, ngf = 3, 100, 64
 
-    def forward(self, z):
-        g = F.relu(self.bn0(self.fc(z).view(
-            z.size(0),
-            self.channel_size*8,
-            self.image_size//8,
-            self.image_size//8,
-        )))
-        g = F.relu(self.bn1(self.deconv1(g)))
-        g = F.relu(self.bn2(self.deconv2(g)))
-        g = F.relu(self.bn3(self.deconv3(g)))
-        g = self.deconv4(g)
-        return self.out(g)
+        self.input_layer = nn.Sequential(
+            nn.ConvTranspose2d(z_size, channel_size * 8, 4, 1, 0, bias=False),
+            nn.BatchNorm2d(channel_size * 8),
+            nn.ReLU(True),
+        )
+
+        self.hidden1 = nn.Sequential(
+            nn.ConvTranspose2d(channel_size * 8, channel_size * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(channel_size * 4),
+            nn.ReLU(True),
+        )
+
+        self.hidden2 = nn.Sequential(
+            nn.ConvTranspose2d( channel_size * 4, channel_size * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(channel_size * 2),
+            nn.ReLU(True),
+        )
+
+        self.out = nn.Sequential(
+            nn.ConvTranspose2d(channel_size * 2, image_channel_size, 4, 2, 1, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        x = x.view(self.image_size, self.z_size, 1, 1)
+        x = self.input_layer(x)
+        x = self.hidden1(x)
+        x = self.hidden2(x)
+        x = self.out(x)
+        return x

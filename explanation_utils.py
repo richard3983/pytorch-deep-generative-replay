@@ -86,8 +86,8 @@ def get_explanation(generated_data, discriminator, prediction, XAItype="shap", c
         else:
             raise Exception("wrong xAI type given")
 
-    # if cuda:
-    #     temp = temp.cuda()
+    if cuda:
+        temp = temp.cuda()
     set_values(normalize_vector(temp))
 
 

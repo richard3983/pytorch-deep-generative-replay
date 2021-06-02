@@ -78,13 +78,14 @@ class WGAN(dgr.Generator):
 
         # run the generator and backpropagate the errors.
         if xAI:
-            self.generator.out.register_backward_hook(explanation_hook)
+            handle = self.generator.out.register_backward_hook(explanation_hook)
         self.generator_optimizer.zero_grad()
         z = self._noise(x.size(0))
         g_loss = self._g_loss(z, xAI=xAI)
         g_loss.backward()
         self.generator_optimizer.step()
-
+        if xAI:
+            handle.remove()
         return {'c_loss': c_loss.item(), 'g_loss': g_loss.item()}
 
     def sample(self, size):
